@@ -1,0 +1,58 @@
+{
+    "packages": [
+        {
+            "name": "superfaktura/apiclient",
+            "version": "1.38",
+            "version_normalized": "1.38.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/superfaktura/apiclient.git",
+                "reference": "633d89a32d968378483e817380a6264b2036fed3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/superfaktura/apiclient/zipball/633d89a32d968378483e817380a6264b2036fed3",
+                "reference": "633d89a32d968378483e817380a6264b2036fed3",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.0.0"
+            },
+            "time": "2023-12-01T12:42:21+00:00",
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "files": [
+                    "SFAPIclient/SFAPIclient.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "SuperFaktura team",
+                    "email": "info@superfaktura.sk",
+                    "homepage": "http://superfaktura.sk",
+                    "role": "Developers"
+                }
+            ],
+            "description": "Api client for SuperFaktura | online invoicing tool",
+            "homepage": "https://github.com/superfaktura/apiclient",
+            "keywords": [
+                "business",
+                "invoice",
+                "invoices"
+            ],
+            "support": {
+                "issues": "https://github.com/superfaktura/apiclient/issues",
+                "source": "https://github.com/superfaktura/apiclient/tree/1.38"
+            },
+            "install-path": "../superfaktura/apiclient"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}
