@@ -22,7 +22,7 @@ btn.addEventListener('click', sfapiCreateCP);
 async function sfapiCreateCP() {
 	const cartDataUrl = `${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart`;
 	const cartItemsDataUrl = `${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart/items`;
-	const sfapiCreateCPUrl = `${sfapi_cp_data.ajax_url}?action=sfapi_create_cp_action`;
+	const sfapiCreateCPUrl = `${sfapi_cp_data.root_url}/wp-json/superfaktura-cp/v1/create`;
 
 	try {
 		const [cartDataResponse, cartItemsDataResponse] = await Promise.all([fetch(cartDataUrl), fetch(cartItemsDataUrl)]);

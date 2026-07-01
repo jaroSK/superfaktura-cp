@@ -20,8 +20,7 @@ function sfapi_cp_load_scripts() {
 	if (is_cart()) {
 		wp_enqueue_script('sfapi_cp_scripts', plugin_dir_url(__FILE__) .'build/index.js', array(), '1.0', array('strategy' => 'defer'));
 		wp_localize_script('sfapi_cp_scripts', 'sfapi_cp_data', array(
-			'root_url' => get_site_url(),
-			'ajax_url' => admin_url('admin-ajax.php')
+			'root_url' => get_site_url()
 		));
 	}
 }
@@ -41,16 +40,20 @@ function sfapi_cp_stiahnut_cp_button() {
 }
 add_action('woocommerce_proceed_to_checkout', 'sfapi_cp_stiahnut_cp_button', 21);
 
+// superfaktura-cp REST route
+
+function sfapi_register_rest_route() {
+	register_rest_route('superfaktura-cp/v1', 'create', array(
+		'methods' => WP_REST_Server::EDITABLE, // 'POST'
+		'callback' => 'sfapi_create_cp',
+		'permission_callback' => '__return_true'
+	));
+}
+add_action('rest_api_init', 'sfapi_register_rest_route');
+
 // Create Cenová ponuka and return CP pdf url
 
 function sfapi_create_cp() {
-	DEFINE('SFAPI_EMAIL', get_option('woocommerce_sf_email'));		// LOGIN EMAIL TO SUPERFAKTURA
-	DEFINE('SFAPI_KEY', get_option('woocommerce_sf_apikey'));		// SFAPI KEY
-	DEFINE('SFAPI_MODULE', 'SUPERFAKTURA_CP');						// TITLE OF MODULE FE. 'WOOCOMMERCE MODULE'
-	DEFINE('SFAPI_APPTITLE', 'SUPERFAKTURA_CP');					// TITLE OF YOUR APPLICATION FE. 'SUPERFAKTURA.SK'
-	DEFINE('COMPANY_ID', get_option('woocommerce_sf_company_id'));	// COMPANY_ID (optional)
-	DEFINE('USE_SANDBOX', get_option('woocommerce_sf_sandbox'));
-
 	require_once plugin_dir_path(__FILE__) .'/vendor/superfaktura/apiclient/SFAPIclient/SFAPIclient.php';
 
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -64,8 +67,8 @@ function sfapi_create_cp() {
 		$datum_platnosti = $datum->format('Y-m-d');
 
 		// Create and init SFAPIclient
-		$api = new SFAPIclient(SFAPI_EMAIL, SFAPI_KEY, SFAPI_APPTITLE, SFAPI_MODULE, COMPANY_ID);
-		if (USE_SANDBOX === 'yes') {
+		$api = new SFAPIclient(get_option('woocommerce_sf_email'), get_option('woocommerce_sf_apikey'), 'SUPERFAKTURA_CP', 'SUPERFAKTURA_CP', get_option('woocommerce_sf_company_id'));
+		if (get_option('woocommerce_sf_sandbox') === 'yes') {
 			$api->useSandBox();
 		}
 
@@ -120,5 +123,3 @@ function sfapi_create_cp() {
 		}
 	}
 }
-add_action('wp_ajax_sfapi_create_cp_action', 'sfapi_create_cp');
-add_action('wp_ajax_nopriv_sfapi_create_cp_action','sfapi_create_cp');
