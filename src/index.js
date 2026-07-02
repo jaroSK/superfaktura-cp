@@ -20,6 +20,10 @@ cartItems.forEach(item => {
 btn.addEventListener('click', sfapiCreateCP);
 
 async function sfapiCreateCP() {
+	console.log(this);
+	this.textContent = 'Vytváram CP, počkajte prosím...';
+	this.disabled = true;
+
 	const cartDataUrl = `${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart`;
 	const cartItemsDataUrl = `${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart/items`;
 	const sfapiCreateCPUrl = `${sfapi_cp_data.root_url}/wp-json/superfaktura-cp/v1/create`;
@@ -62,4 +66,7 @@ async function sfapiCreateCP() {
 	} catch (err) {
 		console.error(`${err}`);
 	}
+
+	this.textContent = 'Stiahnuť cenovú ponuku';
+	this.disabled = false;
 }
