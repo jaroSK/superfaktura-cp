@@ -20,7 +20,6 @@ cartItems.forEach(item => {
 btn.addEventListener('click', sfapiCreateCP);
 
 async function sfapiCreateCP() {
-	console.log(this);
 	this.textContent = 'Vytváram CP, počkajte prosím...';
 	this.disabled = true;
 
