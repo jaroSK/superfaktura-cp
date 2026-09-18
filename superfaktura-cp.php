@@ -65,6 +65,11 @@ function sfapi_create_cp($request) {
 	$datum->modify('+7 days');
 	$datum_platnosti = $datum->format('Y-m-d');
 
+	// Sadzba DPH
+	$tax_rates = WC_Tax::get_rates('');
+	$tax_rate = array_shift($tax_rates);
+	$sadzba_dph = $tax_rate['rate'];
+
 	// Create and init SFAPIclient
 	$api = new SFAPIclient(get_option('woocommerce_sf_email'), get_option('woocommerce_sf_apikey'), 'SUPERFAKTURA_CP', 'SUPERFAKTURA_CP', get_option('woocommerce_sf_company_id'));
 	if (get_option('woocommerce_sf_sandbox') === 'yes') {
@@ -95,7 +100,7 @@ function sfapi_create_cp($request) {
 			'quantity' => $cart_item['quantity'],
 			'unit' => $cart_item['extensions']['sfapi_cp']['unit'],
 			'unit_price' => $unit_price,
-			'tax' => 23
+			'tax' => $sadzba_dph
 		));
 	}
 
@@ -103,7 +108,7 @@ function sfapi_create_cp($request) {
 		$api->addItem(array(
 			'name' => $discount_data[0]->name,
 			'unit_price' => $discount_data[0]->totals->total / (10 ** $discount_data[0]->totals->currency_minor_unit),
-			'tax' => 23
+			'tax' => $sadzba_dph
 		));
 	}
 
