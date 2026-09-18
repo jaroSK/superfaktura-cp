@@ -106,8 +106,8 @@ function sfapi_create_cp($request) {
 
 	if (is_array($discount_data) && !empty($discount_data)) {
 		$api->addItem(array(
-			'name' => $discount_data[0]->name,
-			'unit_price' => $discount_data[0]->totals->total / (10 ** $discount_data[0]->totals->currency_minor_unit),
+			'name' => $discount_data[0]['name'],
+			'unit_price' => $discount_data[0]['totals']['total'] / (10 ** $discount_data[0]['totals']['currency_minor_unit']),
 			'tax' => $sadzba_dph
 		));
 	}
