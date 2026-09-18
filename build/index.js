@@ -1,1 +1,73 @@
-(()=>{"use strict";const t=document.querySelector(".stiahnut-cp-button"),e=document.querySelectorAll(".woocommerce-cart-form__cart-item"),r=[];e.forEach(t=>{const e=t.querySelector(".qty").getAttribute("name").replace("cart[","").replace("][qty]",""),o=t.querySelector(".wck-cart")?.textContent.replace(/:\s+/g,": ").replace(/\s{2,}/g,"\n").trim()??"",a=t.querySelector(".variation")?.textContent.replace(/:\s+/g,": ").trim()??"";r.push({key:e,wck_meta:o,woo_meta:a})}),t.addEventListener("click",async function(){this.textContent="Vytváram CP, počkajte prosím...",this.disabled=!0;const t=`${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart`,e=`${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart/items`,o=`${sfapi_cp_data.root_url}/wp-json/superfaktura-cp/v1/create`;try{const[a,c]=await Promise.all([fetch(t),fetch(e)]);if(!a.ok||!c.ok)throw new Error(`Error getting cart data - (${a.status}) or error getting cart items data - (${c.status})!`);const[s,n]=await Promise.all([a.json(),c.json()]),i=s.fees;n.forEach(t=>{r.forEach(e=>{t.key===e.key&&(t.wck_meta=e.wck_meta,t.woo_meta=e.woo_meta)})});const u=await fetch(o,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cartItemsData:n,discountData:i})});if(!u.ok)throw new Error(`Error creating SuperFaktúra CP - (${u.status})!`);const l=await u.json();if(!l.success)throw new Error("Error downloading SuperFaktúra CP pdf!");window.location.href=l.data.url}catch(t){console.error(`${t}`)}this.textContent="Stiahnuť cenovú ponuku",this.disabled=!1})})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+
+
+const cartItems = document.querySelectorAll('.woocommerce-cart-form__cart-item');
+const cartItemsMeta = [];
+cartItems.forEach(item => {
+  const key = item.querySelector('.qty').getAttribute('name').replace('cart[', '').replace('][qty]', '');
+  const wck_meta = item.querySelector('.wck-cart')?.textContent.replace(/:\s+/g, ': ').replace(/\s{2,}/g, '\n').trim() ?? '';
+  const woo_meta = item.querySelector('.variation')?.textContent.replace(/:\s+/g, ': ').trim() ?? '';
+  cartItemsMeta.push({
+    key,
+    wck_meta,
+    woo_meta
+  });
+});
+document.querySelector('body').addEventListener('click', function (e) {
+  if (e.target.classList.contains('stiahnut-cp-button')) {
+    sfapiCreateCP(e.target);
+  }
+});
+async function sfapiCreateCP(btn) {
+  btn.textContent = 'Vytváram CP, počkajte prosím...';
+  btn.disabled = true;
+  const cartDataUrl = `${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart`;
+  const cartItemsDataUrl = `${sfapi_cp_data.root_url}/wp-json/wc/store/v1/cart/items`;
+  const sfapiCreateCPUrl = `${sfapi_cp_data.root_url}/wp-json/superfaktura-cp/v1/create`;
+  try {
+    const [cartDataResponse, cartItemsDataResponse] = await Promise.all([fetch(cartDataUrl), fetch(cartItemsDataUrl)]);
+    if (!cartDataResponse.ok || !cartItemsDataResponse.ok) {
+      throw new Error(`Error getting cart data - (${cartDataResponse.status}) or error getting cart items data - (${cartItemsDataResponse.status})!`);
+    }
+    const [cartData, cartItemsData] = await Promise.all([cartDataResponse.json(), cartItemsDataResponse.json()]);
+    const discountData = cartData.fees;
+    cartItemsData.forEach(cartItem => {
+      cartItemsMeta.forEach(cartItemMeta => {
+        if (cartItem.key === cartItemMeta.key) {
+          cartItem.wck_meta = cartItemMeta.wck_meta;
+          cartItem.woo_meta = cartItemMeta.woo_meta;
+        }
+      });
+    });
+    const sfapiCreateCPResponse = await fetch(sfapiCreateCPUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        cartItemsData: cartItemsData,
+        discountData: discountData
+      })
+    });
+    if (!sfapiCreateCPResponse.ok) {
+      throw new Error(`Error creating SuperFaktúra CP - (${sfapiCreateCPResponse.status})!`);
+    }
+    const sfapiCPPdf = await sfapiCreateCPResponse.json();
+    if (!sfapiCPPdf.success) {
+      throw new Error(sfapiCPPdf.error_message.type[0]);
+    } else {
+      window.location.href = sfapiCPPdf.url;
+    }
+  } catch (err) {
+    console.error(`${err}`);
+  }
+  btn.textContent = 'Stiahnuť cenovú ponuku';
+  btn.disabled = false;
+}
+/******/ })()
+;
+//# sourceMappingURL=index.js.map

@@ -53,73 +53,70 @@ add_action('rest_api_init', 'sfapi_register_rest_route');
 
 // Create Cenová ponuka and return CP pdf url
 
-function sfapi_create_cp() {
+function sfapi_create_cp($request) {
 	require_once plugin_dir_path(__FILE__) .'/vendor/superfaktura/apiclient/SFAPIclient/SFAPIclient.php';
+	
+	$data = $request->get_json_params();
+	$cart_items_data = $data['cartItemsData'];
+	$discount_data = $data['discountData'];
 
-	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-		$cart_data = json_decode(file_get_contents('php://input'));
-		$cart_items_data = $cart_data->cartItemsData;
-		$discount_data = $cart_data->discountData;
+	// Platnosť CP je 7 dní
+	$datum = new DateTime();
+	$datum->modify('+7 days');
+	$datum_platnosti = $datum->format('Y-m-d');
 
-		// Platnosť CP je 7 dní
-		$datum = new DateTime();
-		$datum->modify('+7 days');
-		$datum_platnosti = $datum->format('Y-m-d');
-
-		// Create and init SFAPIclient
-		$api = new SFAPIclient(get_option('woocommerce_sf_email'), get_option('woocommerce_sf_apikey'), 'SUPERFAKTURA_CP', 'SUPERFAKTURA_CP', get_option('woocommerce_sf_company_id'));
-		if (get_option('woocommerce_sf_sandbox') === 'yes') {
-			$api->useSandBox();
-		}
-
-		// Setup client data
-		$api->setClient(array(
-			'name' => 'Adverti E-SHOP'
-		));
-
-		// Setup invoice data
-		$api->setInvoice(array(
-			'name' => 'Cenová ponuka',
-			'type' => 'estimate', // Cenová ponuka je invoice type estimate
-			'due' => $datum_platnosti
-		));
-
-		// add invoice item, this can be called multiple times
-		// if you are not a VAT registered, use tax = 0
-		foreach ($cart_items_data as $cart_item) {
-			$unit_price = ($cart_item->totals->line_subtotal / $cart_item->quantity) / (10 ** $cart_item->totals->currency_minor_unit);
-			$description = $cart_item->wck_meta && $cart_item->woo_meta ? $cart_item->wck_meta ."\n". $cart_item->woo_meta : $cart_item->wck_meta . $cart_item->woo_meta;
-
-			$api->addItem(array(
-				'name' => str_replace('&#8211;', '-', $cart_item->name),
-				'description' => $description,
-				'quantity' => $cart_item->quantity,
-				'unit' => $cart_item->extensions->sfapi_cp->unit,
-				'unit_price' => $unit_price,
-				'tax' => 23
-			));
-		}
-
-		if (is_array($discount_data) && !empty($discount_data)) {
-			$api->addItem(array(
-				'name' => $discount_data[0]->name,
-				'unit_price' => $discount_data[0]->totals->total / (10 ** $discount_data[0]->totals->currency_minor_unit),
-				'tax' => 23
-			));
-		}
-
-		// save invoice
-		$response = $api->save();
-
-		if ($response->error === 0) {
-			// Cenová ponuka pdf url
-			$sfapi_cp_pdf = $api->getPDF($response->data->Invoice->id, $response->data->Invoice->token);
-
-			wp_send_json_success([
-				'url' => $sfapi_cp_pdf->url
-			]);
-		} else {
-			wp_send_json_error(['error_message' => $response->error_message]);
-		}
+	// Create and init SFAPIclient
+	$api = new SFAPIclient(get_option('woocommerce_sf_email'), get_option('woocommerce_sf_apikey'), 'SUPERFAKTURA_CP', 'SUPERFAKTURA_CP', get_option('woocommerce_sf_company_id'));
+	if (get_option('woocommerce_sf_sandbox') === 'yes') {
+		$api->useSandBox();
 	}
+
+	// Setup client data
+	$api->setClient(array(
+		'name' => 'Adverti E-SHOP'
+	));
+
+	// Setup invoice data
+	$api->setInvoice(array(
+		'name' => 'Cenová ponuka',
+		'type' => 'estimate', // Cenová ponuka je invoice type estimate
+		'due' => $datum_platnosti
+	));
+
+	// add invoice item, this can be called multiple times
+	// if you are not a VAT registered, use tax = 0
+	foreach ($cart_items_data as $cart_item) {
+		$unit_price = ($cart_item['totals']['line_subtotal'] / $cart_item['quantity']) / (10 ** $cart_item['totals']['currency_minor_unit']);
+		$description = $cart_item['wck_meta'] && $cart_item['woo_meta'] ? $cart_item['wck_meta'] ."\n". $cart_item['woo_meta'] : $cart_item['wck_meta'] . $cart_item['woo_meta'];
+
+		$api->addItem(array(
+			'name' => str_replace('&#8211;', '-', $cart_item['name']),
+			'description' => $description,
+			'quantity' => $cart_item['quantity'],
+			'unit' => $cart_item['extensions']['sfapi_cp']['unit'],
+			'unit_price' => $unit_price,
+			'tax' => 23
+		));
+	}
+
+	if (is_array($discount_data) && !empty($discount_data)) {
+		$api->addItem(array(
+			'name' => $discount_data[0]->name,
+			'unit_price' => $discount_data[0]->totals->total / (10 ** $discount_data[0]->totals->currency_minor_unit),
+			'tax' => 23
+		));
+	}
+
+	// save invoice
+	$response = $api->save();
+
+	if ($response->error === 0) {
+		// Cenová ponuka pdf url
+		$sfapi_cp_pdf = $api->getPDF($response->data->Invoice->id, $response->data->Invoice->token);
+		$data = ['success' => true, 'url' => $sfapi_cp_pdf->url];
+	} else {
+		$data = ['success' => false, 'error_message' => $response->error_message];
+	}
+
+	return rest_ensure_response($data);
 }
